@@ -12,6 +12,7 @@
 #include <optional>
 
 #include "event.h"
+#include "logger.h"
 
 using namespace std;
 
@@ -96,6 +97,8 @@ private:
             throw invalid_argument("Teller count must be <= 5");
         }
 
+        SIM_TRACE("--- Starting Simulation with " << tellerCount << " Teller(s) ---");
+
         setupEventQueue();
         resetTellers(tellerCount);
         clearBankLine();
@@ -119,16 +122,22 @@ private:
     //
     // Use searchAvailableTellers() to find an available teller.
     void processArrival(Time currentTime, const ArrivalEvent& arrivalEvent) {
+        SIM_TRACE("[Time " << currentTime << "] Customer ARRIVED (Transaction time: " << arrivalEvent.transactionTime << ")");
         const auto maybeTellerIndex = searchAvailableTellers();
         const auto isLineEmpty = bankLine.size() == 0;
 
         if (maybeTellerIndex && isLineEmpty) {
             const auto tellerIndex = maybeTellerIndex.value();
             auto& teller = tellers[tellerIndex];
+
             teller.startWork(currentTime);
-            eventQueue.push(DepartureEvent(arrivalEvent.arrivalTime + arrivalEvent.transactionTime, tellerIndex));
+            Time newDepartureTime = currentTime + arrivalEvent.transactionTime;
+            eventQueue.push(DepartureEvent(newDepartureTime, tellerIndex));
+
+            SIM_TRACE("           -> Sent directly to Teller " << tellerIndex);
         } else {
             bankLine.push(Customer(arrivalEvent));
+            SIM_TRACE("           -> No tellers available. Added to line. (Line size: " << bankLine.size() << ")");
         }
 
     }
@@ -139,15 +148,25 @@ private:
     //     The teller remains busy (do not stop and restart them).
     //     Add a new departure event to the event queue.
     void processDeparture(Time currentTime, const DepartureEvent& departureEvent) {
+        SIM_TRACE("[Time " << currentTime << "] Customer DEPARTED from Teller " << departureEvent.tellerIndex);
         auto& teller = tellers[departureEvent.tellerIndex];
+
+        teller.stopWork(currentTime);
+
         if (bankLine.size() == 0) {
-            teller.stopWork(departureEvent.departureTime);
+            SIM_TRACE("           -> Line is empty. Teller " << departureEvent.tellerIndex << " goes idle.");
             return;
         }
 
         auto nextCustomer = bankLine.front();
         bankLine.pop();
-        teller.startWork(nextCustomer.arrivalEvent.arrivalTime);
+
+        SIM_TRACE("           -> Teller " << departureEvent.tellerIndex
+                  << " pulled next customer from line. (Remaining in line: " << bankLine.size() << ")");
+
+
+        teller.startWork(currentTime);
+
         Time newDepartureTime = currentTime + nextCustomer.arrivalEvent.transactionTime;
         eventQueue.push(DepartureEvent(newDepartureTime, departureEvent.tellerIndex));
     }
@@ -173,6 +192,7 @@ private:
             const auto eventTime = get_event_time(nextEvent);
             processEvent(eventTime, nextEvent);
         }
+        SIM_TRACE("--- Simulation Complete ---\n");
     }
 
     // Gathers teller busy times into a SimulationResults struct.
@@ -210,8 +230,8 @@ int main() {
 
     // Scenario 1: Textbook
     // Four customers with moderate overlap.
-    runScenario("Scenario 1: Textbook",
-        {{20, 6}, {22, 4}, {23, 2}, {30, 3}});
+    // runScenario("Scenario 1: Textbook",
+    //     {{20, 6}, {22, 4}, {23, 2}, {30, 3}});
 
     // Scenario 2: Rush Hour
     // Eight customers arriving nearly back-to-back with long transactions.
@@ -220,18 +240,18 @@ int main() {
 
     // Scenario 3: Steady Trickle
     // Five customers spaced far apart with short transactions.
-    runScenario("Scenario 3: Steady Trickle",
-        {{10, 2}, {30, 3}, {50, 1}, {70, 2}, {90, 3}});
-
-    // Scenario 4: Morning Rush Then Calm
-    // A burst of four customers, then sparse arrivals.
-    runScenario("Scenario 4: Morning Rush Then Calm",
-        {{1, 5}, {2, 7}, {3, 4}, {4, 6}, {30, 2}, {50, 3}, {70, 1}});
-
-    // Scenario 5: Simultaneous Arrival
-    // Five customers all arriving at the exact same time with identical transactions.
-    runScenario("Scenario 5: Simultaneous Arrival",
-        {{10, 5}, {10, 5}, {10, 5}, {10, 5}, {10, 5}});
+    // runScenario("Scenario 3: Steady Trickle",
+    //     {{10, 2}, {30, 3}, {50, 1}, {70, 2}, {90, 3}});
+    //
+    // // Scenario 4: Morning Rush Then Calm
+    // // A burst of four customers, then sparse arrivals.
+    // runScenario("Scenario 4: Morning Rush Then Calm",
+    //     {{1, 5}, {2, 7}, {3, 4}, {4, 6}, {30, 2}, {50, 3}, {70, 1}});
+    //
+    // // Scenario 5: Simultaneous Arrival
+    // // Five customers all arriving at the exact same time with identical transactions.
+    // runScenario("Scenario 5: Simultaneous Arrival",
+    //     {{10, 5}, {10, 5}, {10, 5}, {10, 5}, {10, 5}});
 
     return 0;
 }

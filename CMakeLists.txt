@@ -28,6 +28,7 @@ set(CORE_SOURCES
         event.cpp
         teller.cpp
         teller.h
+        logger.h
 )
 
 # ==============================================================================
