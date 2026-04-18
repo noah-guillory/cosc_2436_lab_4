@@ -12,10 +12,9 @@ bool Teller::isAvailable() const {
 }
 
 void Teller::startWork(Time currentTime) {
-    if (this->busyStartTime) {
-        elapsedBusyTime += currentTime - this->busyStartTime.value();
+    if (!this->isAvailable()) {
+        throw std::logic_error("Teller is already busy");
     }
-
     this->busyStartTime = currentTime;
 }
 
@@ -23,13 +22,11 @@ void Teller::stopWork(Time currentTime) {
     if (this->isAvailable()) {
         throw std::logic_error("Teller is not working");
     }
-
     if (currentTime < this->busyStartTime.value()) {
-        throw std::logic_error("The time at which the teller stops work cannot be earlier than the time they started work");
+        throw std::logic_error("Stop time cannot be earlier than start time");
     }
 
-    this->totalBusyTime += elapsedBusyTime + (currentTime - this->busyStartTime.value());
-    this->elapsedBusyTime = 0;
+    this->totalBusyTime += (currentTime - this->busyStartTime.value());
     this->busyStartTime = std::nullopt;
 }
 
@@ -59,26 +56,6 @@ TEST_CASE("Teller Class Implementation Tests") {
         CHECK_NOTHROW(teller.stopWork(endTime));
 
         CHECK_EQ(teller.elapsedTimeWorking(), endTime - startTime);
-    }
-
-    SUBCASE("Teller can start work back to back and all the time is accumulated") {
-        int job1Start = 0;
-        int job1End = 10;
-
-        int job1Time = job1End - job1Start;
-
-        int job2Start = 10;
-        int job2End = 20;
-        int job2Time = job2End - job2Start;
-
-        int expectedTotalTime = job1Time + job2Time;
-
-        teller.startWork(job1Start);
-        teller.startWork(job2Start);
-
-        teller.stopWork(job2End);
-
-        CHECK_EQ(teller.elapsedTimeWorking(), expectedTotalTime);
     }
 
     SUBCASE("Should throw exception if stopping work if teller is not busy") {
