@@ -134,12 +134,14 @@ private:
 
     }
 
-    // TODO: Implement processEvent.
-    //
     // Dispatch to processArrival or processDeparture based on the event type.
     // Use std::holds_alternative and std::get to inspect the variant.
-    void processEvent(Time currentTime, const Event& e) {
-
+    void processEvent(const Time currentTime, const Event& e) {
+        if (std::holds_alternative<ArrivalEvent>(e)) {
+            processArrival(currentTime, std::get<ArrivalEvent>(e));
+        } else {
+            processDeparture(currentTime, std::get<DepartureEvent>(e));
+        }
     }
 
     // TODO: Implement runSimulation.
