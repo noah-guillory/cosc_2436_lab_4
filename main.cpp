@@ -24,12 +24,11 @@ struct Customer {
 };
 
 // A compare functor / function object for the priority queue.
-// TODO: Implement operator() to create a min-heap (earliest event time has highest priority).
 //       std::priority_queue is a max-heap by default. Consult its documentation to understand
 //       how the comparator affects ordering.
 struct CompareEvent {
-    bool operator()(const Event & e1, const Event & e2) {
-        return true; // Replace this.
+    bool operator()(const Event & e1, const Event & e2) const {
+        return get_event_time(e1) > get_event_time(e2);
     }
 };
 
@@ -83,7 +82,9 @@ private:
             eventQueue.pop();
         }
 
-        // TODO: Load all arrival events from simulationInput into the event priority queue.
+        for (const auto &event: simulationInput) {
+            eventQueue.push(event);
+        }
     }
 
     // Sets up the simulation for the given number of tellers.
