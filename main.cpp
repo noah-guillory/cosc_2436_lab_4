@@ -111,8 +111,6 @@ private:
         return nullopt;
     }
 
-    // TODO: Implement processArrival.
-    //
     // When a customer arrives:
     //   - If a teller is available AND the bank line is empty, the customer goes
     //     directly to that teller. Start the teller working and add a departure
@@ -121,18 +119,37 @@ private:
     //
     // Use searchAvailableTellers() to find an available teller.
     void processArrival(Time currentTime, const ArrivalEvent& arrivalEvent) {
+        const auto maybeTellerIndex = searchAvailableTellers();
+        const auto isLineEmpty = bankLine.size() == 0;
+
+        if (maybeTellerIndex && isLineEmpty) {
+            const auto tellerIndex = maybeTellerIndex.value();
+            auto& teller = tellers[tellerIndex];
+            teller.startWork(currentTime);
+            eventQueue.push(DepartureEvent(arrivalEvent.arrivalTime + arrivalEvent.transactionTime, tellerIndex));
+        } else {
+            bankLine.push(Customer(arrivalEvent));
+        }
 
     }
 
-    // TODO: Implement processDeparture.
-    //
     // When a customer departs (finishes their transaction):
     //   - If the bank line is empty, the teller stops working.
     //   - Otherwise, take the next customer from the front of the bank line.
     //     The teller remains busy (do not stop and restart them).
     //     Add a new departure event to the event queue.
     void processDeparture(Time currentTime, const DepartureEvent& departureEvent) {
+        auto& teller = tellers[departureEvent.tellerIndex];
+        if (bankLine.size() == 0) {
+            teller.stopWork(departureEvent.departureTime);
+            return;
+        }
 
+        auto nextCustomer = bankLine.front();
+        bankLine.pop();
+        teller.startWork(nextCustomer.arrivalEvent.arrivalTime);
+        Time newDepartureTime = currentTime + nextCustomer.arrivalEvent.transactionTime;
+        eventQueue.push(DepartureEvent(newDepartureTime, departureEvent.tellerIndex));
     }
 
     // Dispatch to processArrival or processDeparture based on the event type.
@@ -145,13 +162,17 @@ private:
         }
     }
 
-    // TODO: Implement runSimulation.
     //
     // Process events from the event queue until it is empty.
     // For each iteration: get the top event, remove it, extract its time,
     // and pass it to processEvent.
     void runSimulation() {
-
+        while (!eventQueue.empty()) {
+            auto nextEvent = eventQueue.top();
+            eventQueue.pop();
+            const auto eventTime = get_event_time(nextEvent);
+            processEvent(eventTime, nextEvent);
+        }
     }
 
     // Gathers teller busy times into a SimulationResults struct.
