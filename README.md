@@ -91,8 +91,3 @@ Commits follow the checkpoints required by the lab spec:
 4. `processArrival`, `processDeparture`, `processEvent`, and `runSimulation` implemented
 5. Scenarios run; results and analysis added
 
----
-
-## License
-
-Academic use only — COSC 2436, Lone Star College.
