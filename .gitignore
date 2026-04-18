@@ -2,3 +2,4 @@ build/
 banksim
 *.o
 .DS_Store
+.idea/
