@@ -19,10 +19,11 @@ using TellerIndex = std::size_t;
 class Teller {
 private:
     std::optional<Time> busyStartTime;
+    Time elapsedBusyTime;
     Time totalBusyTime;
 
 public:
-    Teller(): busyStartTime(std::nullopt), totalBusyTime(0) {}
+    Teller(): busyStartTime(std::nullopt), totalBusyTime(0), elapsedBusyTime(0) {}
 
     /**
      * Indicates if the given teller is available for work
