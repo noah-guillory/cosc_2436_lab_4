@@ -11,22 +11,9 @@
 #include <algorithm>
 #include <optional>
 
+#include "event.h"
+
 using namespace std;
-
-const size_t MIN_TELLERS = 1;
-const size_t MAX_TELLERS = 5;
-
-// Integer time units.
-using Time = int;
-
-// We will be tracking teller state in a variable std::vector.
-using TellerIndex = size_t;
-
-// Arrival event containing only the arrival and transaction times.
-struct ArrivalEvent {
-    Time arrivalTime;
-    Time transactionTime;
-};
 
 // This is a common idiom in FP, wrapping a type in another to yield better
 // semantics (meaning) while gaining some static type checking. This stacking can
@@ -35,24 +22,6 @@ struct ArrivalEvent {
 struct Customer {
     ArrivalEvent arrivalEvent;
 };
-
-// A departure event including the expected departure time and the
-// teller being departed from.
-struct DepartureEvent {
-    Time departureTime;
-    TellerIndex tellerIndex;
-};
-
-// Either an arrival or departure event. std::variant can be thought of as a type-safe union.
-using Event = std::variant<ArrivalEvent, DepartureEvent>;
-
-// Helper function to get the time from either an arrival or departure event.
-Time get_event_time(const Event& e) {
-    if(holds_alternative<ArrivalEvent>(e)) {
-        return get<ArrivalEvent>(e).arrivalTime;
-    }
-    return get<DepartureEvent>(e).departureTime;
-}
 
 // A compare functor / function object for the priority queue.
 // TODO: Implement operator() to create a min-heap (earliest event time has highest priority).
