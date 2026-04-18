@@ -33,23 +33,6 @@ struct CompareEvent {
     }
 };
 
-// TODO: Implement the Teller class.
-//
-// A teller tracks whether they are currently busy or available, and accumulates
-// the total time they have spent working across all customers they serve.
-//
-// Use std::optional<Time> to represent the busy state:
-//   - nullopt means the teller is available
-//   - a Time value means the teller started working at that time
-//
-// Required public interface:
-//   Teller()                          - Default constructor. Available, zero accumulated time.
-//   bool isAvailable() const          - True if not busy.
-//   void startWork(Time currentTime)  - Mark as busy starting at currentTime.
-//   void stopWork(Time currentTime)   - Mark as available. Add elapsed time to accumulated total.
-//   Time elapsedTimeWorking() const   - Return total accumulated busy time.
-
-
 // Holds the simulation results for a single run.
 struct SimulationResults {
     vector<Time> elapsedTimeBusy;
