@@ -230,8 +230,8 @@ int main() {
 
     // Scenario 1: Textbook
     // Four customers with moderate overlap.
-    // runScenario("Scenario 1: Textbook",
-    //     {{20, 6}, {22, 4}, {23, 2}, {30, 3}});
+    runScenario("Scenario 1: Textbook",
+        {{20, 6}, {22, 4}, {23, 2}, {30, 3}});
 
     // Scenario 2: Rush Hour
     // Eight customers arriving nearly back-to-back with long transactions.
@@ -240,18 +240,18 @@ int main() {
 
     // Scenario 3: Steady Trickle
     // Five customers spaced far apart with short transactions.
-    // runScenario("Scenario 3: Steady Trickle",
-    //     {{10, 2}, {30, 3}, {50, 1}, {70, 2}, {90, 3}});
-    //
-    // // Scenario 4: Morning Rush Then Calm
-    // // A burst of four customers, then sparse arrivals.
-    // runScenario("Scenario 4: Morning Rush Then Calm",
-    //     {{1, 5}, {2, 7}, {3, 4}, {4, 6}, {30, 2}, {50, 3}, {70, 1}});
-    //
-    // // Scenario 5: Simultaneous Arrival
-    // // Five customers all arriving at the exact same time with identical transactions.
-    // runScenario("Scenario 5: Simultaneous Arrival",
-    //     {{10, 5}, {10, 5}, {10, 5}, {10, 5}, {10, 5}});
+    runScenario("Scenario 3: Steady Trickle",
+        {{10, 2}, {30, 3}, {50, 1}, {70, 2}, {90, 3}});
+
+    // Scenario 4: Morning Rush Then Calm
+    // A burst of four customers, then sparse arrivals.
+    runScenario("Scenario 4: Morning Rush Then Calm",
+        {{1, 5}, {2, 7}, {3, 4}, {4, 6}, {30, 2}, {50, 3}, {70, 1}});
+
+    // Scenario 5: Simultaneous Arrival
+    // Five customers all arriving at the exact same time with identical transactions.
+    runScenario("Scenario 5: Simultaneous Arrival",
+        {{10, 5}, {10, 5}, {10, 5}, {10, 5}, {10, 5}});
 
     return 0;
 }
@@ -282,8 +282,27 @@ int main() {
  *      tell the bank manager about staffing during peak hours?
  * A2a:
  *
- * Q2b: You may notice that adding a 5th teller actually increases the max busy
- *      time compared to 4 tellers. Why does this happen?
+ * Q2b: You may have noticed that in the Rush Hour scenario, adding a 5th teller doesn't always reduce the max busy
+ *      time compared to 4 tellers. Let's walk through why.
+ *      Customer F arrives at t=6 with a 10-minute transaction — far longer than anyone else (4–9 min). Whichever
+ *      teller ends up serving F will dominate the max busy time, because F alone adds 10 minutes to that teller's
+ *      total. So the real question is: which teller picks up F?
+ *
+ *      4-teller run — what happens step by step:
+ *      Time 1-4: Customers A, B, C, D arrive. Tellers 0, 1, 2, 3 each take one. All busy.
+ *      Time 5-8: E, F, G, H arrive. No tellers free. Line: [E, F, G, H].
+ *      Time 8: Teller 1 finishes B (6 min job). Pulls E from front of line. F is now second in line.
+ *      Time 9: Teller 0 finishes A — has worked 8 min so far. Teller 3 finishes D — has worked 5 min so far.
+ *              Both free at the same instant. F is at the front of the line; one of them grabs it.
+ *      At t=9, depending on which teller grabs F:
+ *              If T0 grabs F: T0 total = 8 + 10 = 18 min
+ *              If T3 grabs F: T3 total = 5 + 10 = 15 min
+ * Look at your program's output for the 4-teller run.
+ * Which of these two values did your simulation produce, and therefore which teller grabbed F on your system?
+ * This is a common problem with task scheduling where sometimes adding resources can actually make the problem worse.
+ * See Braess' paradox for a similar problem with traffic networks.
+ * https://en.wikipedia.org/wiki/Braess%27s_paradox
+ *
  * A2b:
  *
  * Scenario 3: Steady Trickle
