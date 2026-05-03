@@ -261,26 +261,36 @@ int main() {
  * =============================
  *
  * Scenario 1: Textbook
- * 1 teller(s):  ___
- * 2 teller(s):  ___
- * 3 teller(s):  ___
- * 4 teller(s):  ___
- * 5 teller(s):  ___
+ * 1 teller(s):  15
+ * 2 teller(s):  11
+ * 3 teller(s):  9
+ * 4 teller(s):  9
+ * 5 teller(s):  9
  *
  * Q1: At what number of tellers does adding more stop reducing the max busy time?
  *     Why does this happen for this particular input?
- * A1:
+ * A1: Adding more tellers stops reducing the max busy time at 3 tellers. With 3 tellers,
+ *     all four customers go directly to a teller upon arrival without ever waiting in line,
+ *     so there is no queuing backlog to eliminate. The 4th customer arrives at t=30
+ *     after all tellers have gone idle and goes to Teller 0 each time. A 4th or
+ *     5th teller sits completely idle for the entire simulation and cannot reduce the
+ *     workload of the busiest teller.
  *
  * Scenario 2: Rush Hour
- * 1 teller(s):  ___
- * 2 teller(s):  ___
- * 3 teller(s):  ___
- * 4 teller(s):  ___
- * 5 teller(s):  ___
+ * 1 teller(s):  55
+ * 2 teller(s):  30
+ * 3 teller(s):  21
+ * 4 teller(s):  15
+ * 5 teller(s):  16
  *
  * Q2a: Compare the results for 1 teller vs. 3 tellers. What does the difference
  *      tell the bank manager about staffing during peak hours?
- * A2a:
+ * A2a: With 1 teller the max busy time is 55 minutes; with 3 tellers it drops to 21, about
+ *      a 62% reduction. This tells the manager that during peak hours, even a modest
+ *      increase in staffing reduces the load on any single teller. The long
+ *      queue that builds up under 1 teller forces that teller to work continuously serving
+ *      all 8 customers back-to-back, whereas 3 tellers split that backlog so no single
+ *      teller shoulders more than about one-third of the total work.
  *
  * Q2b: You may have noticed that in the Rush Hour scenario, adding a 5th teller doesn't always reduce the max busy
  *      time compared to 4 tellers. Let's walk through why.
@@ -303,45 +313,90 @@ int main() {
  * See Braess' paradox for a similar problem with traffic networks.
  * https://en.wikipedia.org/wiki/Braess%27s_paradox
  *
- * A2b:
+ * A2b: The simulation produced 15 for the 4-teller run, meaning Teller 3 grabbed Customer F.
+ *      At t=9, both Departure(9,0) and Departure(9,3) are in the priority queue with equal
+ *      timestamps. The heap processes Departure(9,3) first (it was inserted later and rose to
+ *      the top due to heap structure), so Teller 3 departs first and immediately pulls F from
+ *      the front of the line (T3 total = 5 + 10 = 15). When Teller 0's departure is then
+ *      processed, it pulls G instead (T0 total = 8 + 4 = 12). Adding a 5th teller makes
+ *      things worse because E is served directly by Teller 4 instead of waiting in line,
+ *      which frees Teller 1 (only 6 min of prior work) to grab F at t=8, giving
+ *      T1 total = 6 + 10 = 16 > 15.
  *
  * Scenario 3: Steady Trickle
- * 1 teller(s):  ___
- * 2 teller(s):  ___
- * 3 teller(s):  ___
- * 4 teller(s):  ___
- * 5 teller(s):  ___
+ * 1 teller(s):  11
+ * 2 teller(s):  11
+ * 3 teller(s):  11
+ * 4 teller(s):  11
+ * 5 teller(s):  11
  *
  * Q3: What do the results tell you about hiring additional tellers for this arrival
  *     pattern? Is there a scenario where a bank could have *too many* tellers?
- * A3:
+ * A3: The max busy time is identical (11) for every teller count. Customers arrive every
+ *     20 minutes with transactions of 1–3 minutes, so each customer always finds Teller 0
+ *     idle on arrival and goes directly to service with no waiting. Extra tellers never
+ *     receive a single customer, sitting idle all day. Yes, a bank can absolutely
+ *     have too many tellers. If arrivals are sparse enough that one teller is never
+ *     backlogged, additional tellers add payroll cost with zero benefit to customers or
+ *     to the max busy metric.
  *
  * Scenario 4: Morning Rush Then Calm
- * 1 teller(s):  ___
- * 2 teller(s):  ___
- * 3 teller(s):  ___
- * 4 teller(s):  ___
- * 5 teller(s):  ___
+ * 1 teller(s):  28
+ * 2 teller(s):  15
+ * 3 teller(s):  17
+ * 4 teller(s):  11
+ * 5 teller(s):  11
  *
  * Q4: How do the results differ from Scenario 2 (pure rush hour)? What does this
  *     suggest about staffing strategies -- should the manager staff for the peak
  *     or the average?
- * A4:
+ * A4: Unlike Scenario 2, where adding tellers incrementally reduces max busy time,
+ *     Scenario 4 is non-incremental: going from 2 to 3 tellers actually increases max
+ *     busy time (15 → 17). This happens because the sparse afternoon customers always
+ *     land on Teller 0 (the first available teller), and with 3 tellers the morning
+ *     rush is distributed so that Teller 0 ends up idle at t=12, earlier than with
+ *     2 tellers, accumulating all three afternoon transactions on top of a heavier
+ *     morning load. The results suggest the manager should not simply staff for the
+ *     peak: the right staffing level depends on the full day's pattern. Here, 4 tellers
+ *     (matching the burst size) is optimal; staffing for the calm period (1–2 tellers)
+ *     creates an unacceptable morning backlog, but overstaffing (3 tellers) can
+ *     ironically worsen the outcome due to scheduling.
  *
  * Scenario 5: Simultaneous Arrival
- * 1 teller(s):  ___
- * 2 teller(s):  ___
- * 3 teller(s):  ___
- * 4 teller(s):  ___
- * 5 teller(s):  ___
+ * 1 teller(s):  25
+ * 2 teller(s):  15
+ * 3 teller(s):  10
+ * 4 teller(s):  10
+ * 5 teller(s):  5
  *
  * Q5: What is the relationship between the number of tellers and the max busy time
  *     for this scenario? Why is this the "worst case" for a queue-based system?
- * A5:
+ * A5: Max busy time = ceil(5 / tellers) * 5. With 1 teller: 5*5=25; 2 tellers: 3*5=15;
+ *     3 tellers: 2*5=10; 4 tellers: ceil(5/4)*5=2*5=10 (no improvement because 5 customers
+ *     can't be split evenly among 4 tellers); 5 tellers: 1*5=5. This is the worst case for
+ *     a queue-based system because all customers arrive simultaneously, producing maximum
+ *     instantaneous congestion — the queue must absorb all 5 customers at once with no
+ *     natural spacing. In every other scenario some customers arrive after earlier ones
+ *     have already finished, naturally reducing the backlog. Here the queue grows to its
+ *     maximum possible size at time zero and tellers must drain it from scratch, so the
+ *     bank line (rather than arrival spacing) entirely determines throughput.
  *
  * Q6 (General): Based on all five scenarios, explain in your own words why a priority
  *     queue is used for the event queue while a regular queue is used for the bank line.
  *     Could you swap them? What would go wrong?
- * A6:
+ * A6: The event queue uses a priority queue because events are inserted out of chronological
+ *     order — a DepartureEvent created at time t is added to the queue mid-simulation and
+ *     must be processed at its scheduled future time, not at the tail end. A priority queue
+ *     always surfaces the earliest-time event regardless of insertion order, keeping the
+ *     simulation's virtual clock advancing correctly.
+ *     The bank line uses a regular FIFO queue because customers must be served in arrival
+ *     order — first come, first served is both fair and the real-world model being simulated.
+ *     Swapping them would break both structures: if the event queue were a FIFO queue,
+ *     departure events inserted mid-simulation would be processed after all pre-loaded
+ *     arrival events regardless of time, scrambling the chronological order and corrupting
+ *     simulation state. If the bank line were a priority queue, you'd need an arbitrary
+ *     priority criterion; choosing arrival time would still give FIFO behavior, but any
+ *     other criterion (e.g., shorter transaction first) would change the simulation's
+ *     semantics entirely and no longer model a standard bank queue.
  *
  */
